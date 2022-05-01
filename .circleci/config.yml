@@ -1,0 +1,58 @@
+version: 2.1
+orbs:
+  node: circleci/node@4.7.0
+  heroku: circleci/heroku@1.2.6
+
+jobs:
+  build_and_test:
+    docker:
+      - image: cimg/node:17.2.0
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          command: npm run test
+          name: Run tests
+      - run:
+          command: npm run build
+          name: Build app
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
+
+  deploy_staging:
+    docker:
+      - image: cimg/node:17.2.0
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - heroku/deploy-via-git:
+          app-name: $HEROKU_STAGING_SWGOHCALCULATORAPI
+
+  deploy_production:
+    docker:
+      - image: cimg/node:17.2.0
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - heroku/deploy-via-git:
+          app-name: $HEROKU_PRODUCTION_SWGOHCALCULATORAPI
+
+workflows:
+  build_and_deploy:
+    jobs:
+      - build_and_test
+      - deploy_staging:
+          requires:
+            - build_and_test
+          filters:
+            branches:
+              only: qa
+      - deploy_production:
+          requires:
+            - build_and_test
+          filters:
+            branches:
+              only: main
