@@ -1,7 +1,8 @@
-import express from 'express';
-import 'dotenv/config'
+import 'dotenv/config';
 
-import { getSwgohHelpAuthToken } from './services/swgoh-help';
+import express from 'express';
+
+import { getSwgohHelpApiAuthToken } from './data-sources/swgoh-help-api';
 
 const app = express();
 const port = process.env.PORT || 3000;
