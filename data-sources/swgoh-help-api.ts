@@ -2,6 +2,8 @@
 import axios from 'axios';
 import url from 'url';
 
+import { redisClient } from '../app';
+
 const SWGOH_HELP_AUTH_TOKEN = 'authToken';
 const SWGOH_HELP_UNITS_LIST_KEY = 'unitsList';
 
@@ -20,7 +22,7 @@ const authHeaders = {
   }
 };
 
-const getSwgohHelpApiAuthToken = async (redisClient): Promise<string> => {
+const getSwgohHelpApiAuthToken = async (): Promise<string> => {
   let authToken: string = await redisClient.get(SWGOH_HELP_AUTH_TOKEN);
 
   if (!authToken) {
@@ -55,12 +57,12 @@ export interface UnitListEntry {
     baseId: string
 }
 
-export const getSwgohHelpUnitsList = async (redisClient): Promise<UnitListEntry[]> => {
+export const getSwgohHelpUnitsList = async (): Promise<UnitListEntry[]> => {
   const unitsListResponse = await redisClient.get(SWGOH_HELP_UNITS_LIST_KEY);
   let unitsList: UnitListEntry[] = JSON.parse(unitsListResponse);
 
   if (!unitsList) {
-    const authToken = await getSwgohHelpApiAuthToken(redisClient);
+    const authToken = await getSwgohHelpApiAuthToken();
     const authHeaders = {
       headers: {
         'Authorization': `Bearer ${authToken}`
