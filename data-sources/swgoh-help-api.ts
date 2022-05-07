@@ -19,8 +19,8 @@ const authHeaders = {
   }
 };
 
-const getSwgohHelpApiAuthToken = async (client): Promise<string> => {
-  let authToken: string = await client.get(SWGOH_HELP_AUTH_TOKEN);
+const getSwgohHelpApiAuthToken = async (redisClient): Promise<string> => {
+  let authToken: string = await redisClient.get(SWGOH_HELP_AUTH_TOKEN);
 
   if (!authToken) {
     const response = await axios.post('https://api.swgoh.help/auth/signin', authParams, authHeaders);
@@ -28,7 +28,7 @@ const getSwgohHelpApiAuthToken = async (client): Promise<string> => {
     // We subtract 60 seconds from expiration time to prevent edge case where token is about to expire
     // and will by the time it's used for the API call
     const expirationTime: number = response.data?.expires_in as number - 60;
-    await client.set(SWGOH_HELP_AUTH_TOKEN, authToken, { EX: expirationTime });
+    await redisClient.set(SWGOH_HELP_AUTH_TOKEN, authToken, { EX: expirationTime });
   }
 
   return authToken;
@@ -54,8 +54,8 @@ export interface UnitListEntry {
     baseId: string
 }
 
-export const getSwgohHelpUnitsList = async (client): Promise<UnitListEntry[]> => {
-  const authToken = await getSwgohHelpApiAuthToken(client);
+export const getSwgohHelpUnitsList = async (redisClient): Promise<UnitListEntry[]> => {
+  const authToken = await getSwgohHelpApiAuthToken(redisClient);
   const authHeaders = {
     headers: {
       'Authorization': `Bearer ${authToken}`
