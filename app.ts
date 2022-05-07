@@ -3,7 +3,7 @@ import 'dotenv/config';
 import express from 'express';
 import { createClient } from 'redis';
 
-import { getSwgohHelpUnitsList, UnitListEntry } from './data-sources/swgoh-help-api';
+import { getSwgohHelpUnitsList, UnitListRecord } from './data-sources/swgoh-help-api';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/units', async (req, res) => {
-  const unitsList: UnitListEntry[] = await getSwgohHelpUnitsList();
+  const unitsList: UnitListRecord = await getSwgohHelpUnitsList();
   res.json(unitsList);
 });
 
