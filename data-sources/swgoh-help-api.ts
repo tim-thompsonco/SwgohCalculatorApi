@@ -15,11 +15,11 @@ const authParams = new url.URLSearchParams({
 
 const authHeaders = {
   headers: {
-    'content-type': 'application/x-www-form-urlencoded'
+    'Content-Type': 'application/x-www-form-urlencoded'
   }
 };
 
-export const getSwgohHelpApiAuthToken = async (client): Promise<string> => {
+const getSwgohHelpApiAuthToken = async (client): Promise<string> => {
   let authToken: string = await client.get(SWGOH_HELP_AUTH_TOKEN);
 
   if (!authToken) {
@@ -32,4 +32,36 @@ export const getSwgohHelpApiAuthToken = async (client): Promise<string> => {
   }
 
   return authToken;
+};
+
+const unitsListParams = {
+  'collection': 'unitsList',
+  'language': 'eng_us',
+  'match': {
+    'rarity': 7,
+    'obtainable': true,
+    'obtainableTime': 0,
+    'combatType': 1
+  },
+  'project': {
+    'baseId': 1,
+    'nameKey': 1
+  }
+};
+
+export interface UnitListEntry {
+    nameKey: string,
+    baseId: string
+}
+
+export const getSwgohHelpUnitsList = async (client): Promise<UnitListEntry[]> => {
+  const authToken = await getSwgohHelpApiAuthToken(client);
+  const authHeaders = {
+    headers: {
+      'Authorization': `Bearer ${authToken}`
+    }
+  };
+  
+  const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
+  return response.data;
 };
