@@ -20,12 +20,15 @@ const authHeaders = {
 };
 
 export const getSwgohHelpApiAuthToken = async (client): Promise<string> => {
-  let authToken = await client.get(SWGOH_HELP_AUTH_TOKEN);
+  let authToken: string = await client.get(SWGOH_HELP_AUTH_TOKEN);
 
   if (!authToken) {
     const response = await axios.post('https://api.swgoh.help/auth/signin', authParams, authHeaders);
     authToken = response.data?.access_token;
-    await client.set(SWGOH_HELP_AUTH_TOKEN, authToken, { EX: response.data?.expires_in });
+    // We subtract 60 seconds from expiration time to prevent edge case where token is about to expire
+    // and will by the time it's used for the API call
+    const expirationTime: number = response.data?.expires_in as number - 60;
+    await client.set(SWGOH_HELP_AUTH_TOKEN, authToken, { EX: expirationTime });
   }
 
   return authToken;
