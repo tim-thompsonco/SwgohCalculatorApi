@@ -6,8 +6,8 @@ import { createClient } from 'redis';
 const app = express();
 const port = process.env.PORT || 3000;
 
-const client = createClient({ url: process.env.REDIS_URL });
-await client.connect();
+export const redisClient = createClient({ url: process.env.REDIS_URL });
+await redisClient.connect();
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
