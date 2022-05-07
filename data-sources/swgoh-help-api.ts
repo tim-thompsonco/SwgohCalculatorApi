@@ -3,6 +3,7 @@ import axios from 'axios';
 import url from 'url';
 
 const SWGOH_HELP_AUTH_TOKEN = 'authToken';
+const SWGOH_HELP_UNITS_LIST_KEY = 'unitsList';
 
 // We have to use snake case for the API request because that's what SWGOH Help uses
 const authParams = new url.URLSearchParams({
@@ -55,13 +56,23 @@ export interface UnitListEntry {
 }
 
 export const getSwgohHelpUnitsList = async (redisClient): Promise<UnitListEntry[]> => {
-  const authToken = await getSwgohHelpApiAuthToken(redisClient);
-  const authHeaders = {
-    headers: {
-      'Authorization': `Bearer ${authToken}`
-    }
-  };
-  
-  const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
-  return response.data;
+  const unitsListResponse = await redisClient.get(SWGOH_HELP_UNITS_LIST_KEY);
+  let unitsList: UnitListEntry[] = JSON.parse(unitsListResponse);
+
+  if (!unitsList) {
+    const authToken = await getSwgohHelpApiAuthToken(redisClient);
+    const authHeaders = {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    };
+    
+    const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
+    unitsList = response.data;
+    // Units list should be refreshed every 24 hours, shown here in seconds
+    const expirationTime =  24 * 60 * 60;
+    await redisClient.set(SWGOH_HELP_UNITS_LIST_KEY, JSON.stringify(unitsList), { EX: expirationTime });   
+  }
+
+  return unitsList;
 };
