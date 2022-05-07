@@ -52,14 +52,18 @@ const unitsListParams = {
   }
 };
 
-export interface UnitListEntry {
+interface UnitListEntry {
     nameKey: string,
     baseId: string
 }
 
-export const getSwgohHelpUnitsList = async (): Promise<UnitListEntry[]> => {
+export interface UnitListRecord {
+    id: string
+}
+
+export const getSwgohHelpUnitsList = async (): Promise<UnitListRecord> => {
   const unitsListResponse = await redisClient.get(SWGOH_HELP_UNITS_LIST_KEY);
-  let unitsList: UnitListEntry[] = JSON.parse(unitsListResponse);
+  let unitsList: UnitListRecord = JSON.parse(unitsListResponse);
 
   if (!unitsList) {
     const authToken = await getSwgohHelpApiAuthToken();
@@ -70,7 +74,9 @@ export const getSwgohHelpUnitsList = async (): Promise<UnitListEntry[]> => {
     };
     
     const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
-    unitsList = response.data;
+
+    unitsList = Object.assign({}, ...response.data.map((entry: UnitListEntry) => 
+      ({ [entry.baseId]: entry.nameKey })));
     // Units list should be refreshed every 24 hours, shown here in seconds
     const expirationTime =  24 * 60 * 60;
     await redisClient.set(SWGOH_HELP_UNITS_LIST_KEY, JSON.stringify(unitsList), { EX: expirationTime });   
