@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "description": "",
   "main": "app.ts",
+  "type": "module",
   "scripts": {
     "build": "npx tsc",
-    "start": "node --experimental-modules dist/app.js",
-    "test": "mocha -r ts-node/register 'test/**/*.ts'",
+    "start": "node dist/app.js",
+    "test": "mocha --require ts-node/register './test/**/*.ts'",
     "dev": "npm run build && npm start"
   },
   "keywords": [],
