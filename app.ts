@@ -15,9 +15,9 @@ app.get('/', (req, res) => {
 });
 
 app.get('/units', async (req, res) => {
-  redisClient.connect();
+  await redisClient.connect();
   const unitsList: UnitListRecord = await getSwgohHelpUnitsList();
-  redisClient.quit();
+  await redisClient.quit();
 
   res.json(unitsList);
 });
