@@ -9,14 +9,16 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 export const redisClient = createClient({ url: process.env.REDIS_URL });
-await redisClient.connect();
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
 app.get('/units', async (req, res) => {
+  redisClient.connect();
   const unitsList: UnitListRecord = await getSwgohHelpUnitsList();
+  redisClient.quit();
+
   res.json(unitsList);
 });
 
