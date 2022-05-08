@@ -74,13 +74,28 @@ export const getSwgohHelpUnitsList = async (): Promise<UnitListRecord> => {
     };
     
     const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
+    const sortedResponseData: UnitListEntry[] = getSortedUnitListResponseData(response.data);
 
-    unitsList = Object.assign({}, ...response.data.map((entry: UnitListEntry) => 
-      ({ [entry.baseId]: entry.nameKey })));
+    unitsList = Object.assign({}, ...sortedResponseData.map((entry) => ({ [entry.baseId]: entry.nameKey })));
     // Units list should be refreshed every 24 hours, shown here in seconds
     const expirationTime =  24 * 60 * 60;
     await redisClient.set(SWGOH_HELP_UNITS_LIST_KEY, JSON.stringify(unitsList), { EX: expirationTime });   
   }
 
   return unitsList;
+};
+
+const getSortedUnitListResponseData = (unitListData: UnitListEntry[]): UnitListEntry[] => {
+  return unitListData.sort((a, b) => {
+    const firstNameKey = a.nameKey.toLowerCase();
+    const secondNameKey = b.nameKey.toLowerCase();
+  
+    if (firstNameKey < secondNameKey) {
+      return -1;
+    }
+    else if (firstNameKey > secondNameKey) {
+      return 1;
+    } 
+    return 0;
+  });
 };
