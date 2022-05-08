@@ -1,5 +1,6 @@
 import 'dotenv/config';
 
+import cors from 'cors';
 import express from 'express';
 import { createClient } from 'redis';
 
@@ -7,6 +8,22 @@ import { getSwgohHelpUnitsList, UnitListRecord } from './data-sources/swgoh-help
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const corsWhiteList = [
+  'https://swgohcalculator.herokuapp.com', 
+  'https://swgohcalculator-qa.herokuapp.com', 
+  'http://localhost:3001'];
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (corsWhiteList.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    }
+    else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
+app.use(cors(corsOptions));
 
 export const redisClient = createClient({ url: process.env.REDIS_URL });
 
