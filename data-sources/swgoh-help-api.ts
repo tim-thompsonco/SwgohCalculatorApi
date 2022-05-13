@@ -62,27 +62,35 @@ export interface UnitListRecord {
 }
 
 export const getSwgohHelpUnitsList = async (): Promise<UnitListRecord> => {
-  const unitsListResponse = await redisClient.get(SWGOH_HELP_UNITS_LIST_KEY);
-  let unitsList: UnitListRecord = JSON.parse(unitsListResponse);
+  const unitsListCache = await redisClient.get(SWGOH_HELP_UNITS_LIST_KEY);
+  let unitsList: UnitListRecord = JSON.parse(unitsListCache);
 
   if (!unitsList) {
-    const authToken = await getSwgohHelpApiAuthToken();
-    const authHeaders = {
-      headers: {
-        'Authorization': `Bearer ${authToken}`
-      }
-    };
-    
-    const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
-    const sortedResponseData: UnitListEntry[] = getSortedUnitListResponseData(response.data);
-
-    unitsList = Object.assign({}, ...sortedResponseData.map((entry) => ({ [entry.baseId]: entry.nameKey })));
-    // Units list should be refreshed every 24 hours, shown here in seconds
-    const expirationTime =  24 * 60 * 60;
-    await redisClient.set(SWGOH_HELP_UNITS_LIST_KEY, JSON.stringify(unitsList), { EX: expirationTime });   
+    unitsList = await getSwgohHelpUnitsListFromApi();
+    updateSwgohHelpUnitsListCache(unitsList);
   }
 
   return unitsList;
+};
+
+export const getSwgohHelpUnitsListFromApi = async (): Promise<UnitListRecord> => {
+  const authToken = await getSwgohHelpApiAuthToken();
+  const authHeaders = {
+    headers: {
+      'Authorization': `Bearer ${authToken}`
+    }
+  };
+    
+  const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
+  const sortedResponseData: UnitListEntry[] = getSortedUnitListResponseData(response.data);
+
+  return Object.assign({}, ...sortedResponseData.map((entry) => ({ [entry.baseId]: entry.nameKey })));
+};
+
+export const updateSwgohHelpUnitsListCache = async (unitsList: UnitListRecord): Promise<void> => {
+  // Units list should be refreshed every 24 hours, shown here in seconds
+  const expirationTime =  24 * 60 * 60;
+  await redisClient.set(SWGOH_HELP_UNITS_LIST_KEY, JSON.stringify(unitsList), { EX: expirationTime });   
 };
 
 const getSortedUnitListResponseData = (unitListData: UnitListEntry[]): UnitListEntry[] => {
