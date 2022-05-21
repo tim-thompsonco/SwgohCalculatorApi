@@ -4,7 +4,13 @@ import cors from 'cors';
 import express from 'express';
 import { createClient } from 'redis';
 
-import { getUnitsList, refreshUnitsList } from './services/units';
+import { 
+  getSwgohHelpUnitsList, 
+  getSwgohPlayerRoster, 
+  PlayerUnitEntry,
+  refreshUnitsList, 
+  UnitListRecord 
+} from './services/swgoh-help-api';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -33,8 +39,16 @@ setInterval(async () => {
   await refreshUnitsList();
 }, 86400000); // 24 hours in milliseconds
 
-app.get('/units', async () => {
-  return await getUnitsList();
+app.get('/units', async (req, res) => {
+  const unitsList: UnitListRecord = await getSwgohHelpUnitsList();
+
+  return res.json(unitsList);
+});
+
+app.get('/roster/:allycode', async (req, res) => {
+  const playerRoster: Record<string, PlayerUnitEntry> = await getSwgohPlayerRoster(req.params.allycode);
+
+  return res.json(playerRoster);
 });
 
 app.listen(port, () => {
