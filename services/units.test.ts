@@ -7,7 +7,7 @@ const { expect } = chai;
 
 chai.use(chaiHttp);
 
-describe('Integration tests for endpoints using SWGOH Help API', () => {
+describe('Integration tests for obtaining data from SWGOH Help API', () => {
   it('Units endpoint returns unit info from SWGOH Help API', () => {
     chai.request(app)
       .get('/units')
