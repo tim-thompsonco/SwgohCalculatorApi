@@ -74,17 +74,21 @@ export const getSwgohHelpUnitsList = async (): Promise<UnitListRecord> => {
 };
 
 export const getSwgohHelpUnitsListFromApi = async (): Promise<UnitListRecord> => {
-  const authToken = await getSwgohHelpApiAuthToken();
-  const authHeaders = {
-    headers: {
-      'Authorization': `Bearer ${authToken}`
-    }
-  };
-    
+  const authHeaders = await getSwgohAuthHeaders();
   const response = await axios.post('https://api.swgoh.help/swgoh/data', unitsListParams, authHeaders);
   const sortedResponseData: UnitListEntry[] = getSortedUnitListResponseData(response.data);
 
   return Object.assign({}, ...sortedResponseData.map((entry) => ({ [entry.baseId]: entry.nameKey })));
+};
+
+const getSwgohAuthHeaders = async () => {
+  const authToken = await getSwgohHelpApiAuthToken();
+    
+  return {
+    headers: {
+      'Authorization': `Bearer ${authToken}`
+    }
+  }; 
 };
 
 export const updateSwgohHelpUnitsListCache = async (unitsList: UnitListRecord): Promise<void> => {
@@ -106,4 +110,39 @@ const getSortedUnitListResponseData = (unitListData: UnitListEntry[]): UnitListE
     } 
     return 0;
   });
+};
+
+const getPlayerRosterParams = (allyCode: string) => {
+  return {
+    'allycodes': [allyCode],
+    'project': {
+      'starLevel': 1,
+      'level': 1
+    }
+  };
+};
+
+interface PlayerUnitEntry {
+    type: number,
+    starLevel: number,
+    level: number
+}
+
+export const getSwgohPlayerRoster = async (allyCode: string) => {
+  const authHeaders = await getSwgohAuthHeaders();
+  const playerRosterParams = getPlayerRosterParams(allyCode);
+  const response = await axios.post('https://api.swgoh.help/swgoh/units', playerRosterParams, authHeaders);
+
+  return getFormattedPlayerRosterResponseData(response.data);
+};
+
+const getFormattedPlayerRosterResponseData = (rosterData: Record<string, PlayerUnitEntry[]>) => {
+  const playerRoster: Record<string, PlayerUnitEntry> = {};
+    
+  for (const [key, value] of Object.entries(rosterData)) {
+    const [data] = value;
+    playerRoster[key] = data;
+  }
+
+  return playerRoster;
 };
