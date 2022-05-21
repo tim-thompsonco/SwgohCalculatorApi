@@ -7,7 +7,7 @@
   "scripts": {
     "build": "npx tsc",
     "start": "node --es-module-specifier-resolution=node dist/app.js",
-    "test": "mocha --require ts-node/register --es-module-specifier-resolution=node './**/*.test.ts'",
+    "test": "mocha --exit --require ts-node/register --es-module-specifier-resolution=node './**/*.test.ts'",
     "dev": "npm run build && npm start"
   },
   "keywords": [],
