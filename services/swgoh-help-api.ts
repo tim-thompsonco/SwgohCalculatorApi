@@ -62,13 +62,18 @@ export interface UnitListRecord {
 }
 
 export const getSwgohHelpUnitsList = async (): Promise<UnitListRecord> => {
+  await redisClient.connect();
+
   const unitsListCache = await redisClient.get(SWGOH_HELP_UNITS_LIST_KEY);
+  
   let unitsList: UnitListRecord = JSON.parse(unitsListCache);
 
   if (!unitsList) {
     unitsList = await getSwgohHelpUnitsListFromApi();
     updateSwgohHelpUnitsListCache(unitsList);
   }
+
+  await redisClient.quit();
 
   return unitsList;
 };
@@ -79,6 +84,11 @@ export const getSwgohHelpUnitsListFromApi = async (): Promise<UnitListRecord> =>
   const sortedResponseData: UnitListEntry[] = getSortedUnitListResponseData(response.data);
 
   return Object.assign({}, ...sortedResponseData.map((entry) => ({ [entry.baseId]: entry.nameKey })));
+};
+
+export const refreshUnitsList = async () => {
+  const unitsList = await getSwgohHelpUnitsListFromApi();
+  updateSwgohHelpUnitsListCache(unitsList);
 };
 
 const getSwgohAuthHeaders = async () => {
@@ -122,16 +132,20 @@ const getPlayerRosterParams = (allyCode: string) => {
   };
 };
 
-interface PlayerUnitEntry {
+export interface PlayerUnitEntry {
     type: number,
     starLevel: number,
     level: number
 }
 
 export const getSwgohPlayerRoster = async (allyCode: string) => {
+  await redisClient.connect();
+    
   const authHeaders = await getSwgohAuthHeaders();
   const playerRosterParams = getPlayerRosterParams(allyCode);
   const response = await axios.post('https://api.swgoh.help/swgoh/units', playerRosterParams, authHeaders);
+
+  await redisClient.quit();
 
   return getFormattedPlayerRosterResponseData(response.data);
 };
